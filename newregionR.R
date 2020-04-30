@@ -8,13 +8,12 @@ library(GenomicRanges)
 library(GenomicFeatures)
 library(BSgenome)
 library(BSgenome.Dmelanogaster.UCSC.dm3)
-library(BSgenome.Dmelanogaster.UCSC.dm6)
+#library(BSgenome.Dmelanogaster.UCSC.dm6)
 library(tidyverse)
 library("reader")
-library(EnrichedHeatmap)
-library("GenometriCorr")
-library(ComplexHeatmap)
-library(EnrichedHeatmap)
+#library(EnrichedHeatmap)
+#library("GenometriCorr")
+#library(ComplexHeatmap)
 library(ggplot2)
 library(pheatmap)
 library(ChIPseeker)
@@ -23,16 +22,15 @@ library(clusterProfiler)
 
 
 ##########Loading peak-called ATAC/CHip-seq data##########
-setwd("~/OneDrive/uclPHD/meta-data/experiment/datacollection")
+setwd("~/OneDrive/uclPHD/meta-data/switch_experiment/atac_overlap/datacollection")
+setwd("C:/Users/cmlf/OneDrive/uclPHD/meta-data/switch_experiment/atac_overlap/datacollection")
+
 
 collect<-dir()
 filelist<-list()
 filetable<-list()
 filetableGrange<-list()
 prerelease<-data.frame(matrix(NA, nrow=length(collect), ncol=60))
-filetowork<-list()
-sr<-list()
-mr<-list()
 ID<-list()
 Sequence<-list()
 object<-list()
@@ -154,21 +152,6 @@ problemrelease<-subset(releasefinal, releasefinal$X2 == "r5")
 NArelease<-releasefinal[which(is.na(releasefinal$X2)),]
 
 
-###########gather the gff file to a new folder##########################
-#setwd("~/OneDrive/uclPHD/meta-data")
-#if(!dir.exists("gff3tobe")){
-# dir.create("gff3tobe")
-#}
-
-#mydir<-
-#for(file in filelist) {
-# See ?file.copy for more options
-# file.copy(file, "gff3tobe")
-#}
-
-#setwd("~/OneDrive/uclPHD/meta-data/experiment")
-
-
 #############identify the foxo data###########################################
 setwd("~/OneDrive/uclPHD/meta-data/experiment/foxo/results of coordination")
 
@@ -179,9 +162,7 @@ setwd("~/OneDrive/uclPHD/meta-data/experiment/foxo/results of coordination")
 #foxo1<-left_join(foxo, foxoupdated1, by="rownames.Res.")
 #write.csv(foxo1,file=paste(getwd(), "/", "foxofb.csv", sep=''))
 
-
-
-######################convert foxo to formal expression##################
+#############convert foxo to formal expression##################
 foxo<-read.csv("foxofb.csv")
 chromosome<-sapply(foxo$chr, function(x) str_extract(x, "^.*:"))
 start<-sapply(foxo$chr, function(x) str_extract(x, ":[0-9]+.."))
@@ -198,137 +179,40 @@ foxo1<-cbind(foxo,a)
 export.gff3(foxogRange, paste(getwd(), "/", ID[[i]], "foxosig.gff3", sep=''))
 
 
+#############load genomer5#########################################
+setwd("~/OneDrive/uclPHD/meta-data/switch_experiment/atac_overlap/datacollection")
 
-#############convert the release version to the newest #####################
-chain<-import.chain("~/OneDrive/uclPHD/meta-data/experiment/chain/dm3ToDm6.over.chain")
-updatedfile<-lapply(filetableGrange, function(x) liftOver(x, chain))
-updatedfile.df<-lapply(updatedfile, as.data.frame)
-
-##############output the file################################
-setwd("~/OneDrive/uclPHD/meta-data/experiment/updated")
-
-i<-1
-
-for (i in 1:length(updatedfile.df)){
-  export.gff3(updatedfile.df[[i]], paste(getwd(), "/", ID[[i]], "updated.gff3", sep=''))
-}
-
-
-##################loading the updated gff file back###########
-setwd("~/OneDrive/uclPHD/meta-data/experiment/updated")
-
-#get the file address
-
-collect<-dir()
-i<-1
-
-for (i in 1:length(collect)){
-  filetowork[[i]]<-import(collect[i])
-  names(filetowork[[i]])<-collect[i]
-}
-
-
-
-###############check whether sequence identical after converting####################################################
-i<-1
-
-for (i in 1:length(filelist)){
-  
-  Sequence[[i]]<-BSgenome::getSeq(BSgenome.Dmelanogaster.UCSC.dm6, filetowork[[i]])
-  
-}
-
-BSgenome::getSeq(BSgenome.Dmelanogaster.UCSC.dm3, filetableGrange[[i]])
-
-BSgenome::getSeq(BSgenome.Dmelanogaster.UCSC.dm3, names=filetable[[i]]$chr, start=filetable[[i]]$starter, end=filetable[[i]]$ender, strand=filetable[[i]]$strander, as.character=TRUE)
-
-
-
-
-
-#################check the updated, and if anything missing#########
-i<-1
-
-for (i in 1:length(collect)){
-  
-  #Find site split to multiple regions
-  
-  idd<-data.frame(table(filetowork[[i]]$attribute))
-  sr[[i]]<-filetowork[[i]][filetowork[[i]]$attribute %in% idd$Var1[idd$Freq > 1],]
-  
-  
-  #Find merge split
-  mrid<-setdiff(filetableGrange[[i]]$attribute, filetowork[[i]]$attribute)
-  mr[[i]]<-filetableGrange[[i]][filetableGrange[[i]]$attribute %in% mrid,]
-  
-}
-
-##############make a tabel for number of split and merge#####################
-split<-sapply(sr, function(x) length(x))
-merge<-sapply(mr,function(x) length(x))
-ID<-1:length(collect)
-
-smr<-data.frame(ID, split, merge)
-
-
-
-
-
-
-
-
-##################basic#################################################
-setwd("~/OneDrive/uclPHD/meta-data/experiment/datacollection")
 collect<-dir()
 pt2<-list()
 dmgenome<-characterToBSGenome("dm3")
 
-################get file#############################################
-######################convert foxo to gRange list)
+########convert foxo to gRange list###########################
 
-setwd("~/OneDrive/uclPHD/meta-data/experiment/foxo/results of coordination")
+setwd("~/OneDrive/uclPHD/meta-data/switch_experiment/atac_overlap/foxo/results of coordination")
+setwd("C:/Users/cmlf/OneDrive/uclPHD/meta-data/switch_experiment/atac_overlap/foxo/results of coordination")
 
 foxo<-read.csv("foxofb1.csv")
 
 foxonoNA<-foxo[complete.cases(foxo),]
-
 foxopadj<-subset(foxo, foxo$padj<0.1)
-
 foxopadjnoNA<-foxopadj[complete.cases(foxopadj),]
-
 foxopadjnoNA$chromosome<-droplevels(foxopadjnoNA$chromosome)
-
-foxoopen<-subset(foxopadjnoNA, foxopadjnoNA$log2FoldChange>0)
-foxoclose<-subset(foxopadjnoNA, foxopadjnoNA$log2FoldChange<0)
-foxoallopen<-subset(foxonoNA, foxonoNA$log2FoldChange>0)
-foxoallclose<-subset(foxonoNA, foxonoNA$log2FoldChange<0)
-
+#foxoopen<-subset(foxopadjnoNA, foxopadjnoNA$log2FoldChange>0)
 
 foxogRange<-makeGRangesFromDataFrame(foxopadjnoNA,  keep.extra.columns = TRUE, seqnames.field = "chromosome", start.field = "start", end.field = "end", ignore.strand=TRUE)
-
-foxofullgRange<-makeGRangesFromDataFrame(foxonoNA,  keep.extra.columns = TRUE, seqnames.field = "chromosome", start.field = "start", end.field = "end", ignore.strand=TRUE)
-
-foxoopengRange<-makeGRangesFromDataFrame(foxoopen,  keep.extra.columns = TRUE, seqnames.field = "chromosome", start.field = "start", end.field = "end", ignore.strand=TRUE)
-
-foxoclosegRange<-makeGRangesFromDataFrame(foxoclose,  keep.extra.columns = TRUE, seqnames.field = "chromosome", start.field = "start", end.field = "end", ignore.strand=TRUE)
-
-foxofullopengRange<-makeGRangesFromDataFrame(foxoallopen,  keep.extra.columns = TRUE, seqnames.field = "chromosome", start.field = "start", end.field = "end", ignore.strand=TRUE)
-
-foxofullclosegRange<-makeGRangesFromDataFrame(foxoallclose,  keep.extra.columns = TRUE, seqnames.field = "chromosome", start.field = "start", end.field = "end", ignore.strand=TRUE)
+#foxofullgRange<-makeGRangesFromDataFrame(foxonoNA,  keep.extra.columns = TRUE, seqnames.field = "chromosome", start.field = "start", end.field = "end", ignore.strand=TRUE)
+#foxoopengRange<-makeGRangesFromDataFrame(foxoopen,  keep.extra.columns = TRUE, seqnames.field = "chromosome", start.field = "start", end.field = "end", ignore.strand=TRUE)
 
 #export.gff3(foxogRange, paste(getwd(), "/", ID[[i]], "foxosig.gff3", sep=''))
 
-
-
-
-
+rm(foxo,foxoNA,foxopadj,foxopadjnoNA,foxonoNA)
 #######################################permutation test##################################
 i<-1 
 
 for (i in 1:length(collect)){
   
   
-  try(pt2[[i]]<-overlapPermTest(A=foxofullclosegRange, B=filetableGrange[[i]], ntime=1000,genome=dmgenome, alternative = "auto"))
+  try(pt2[[i]]<-overlapPermTest(A=foxofullgRange, B=filetableGrange[[i]], ntime=1500,genome=dmgenome, alternative = "auto"))
   
   cat(i, "\n")
   
@@ -362,19 +246,19 @@ result<-as.data.frame(cbind(ID, psig, padj, observed, Zscore,k))
 
 
 ##############output###########################################
-
-
 setwd("~/OneDrive/uclPHD/meta-data/experiment")
 
-write.csv(result, file=paste(getwd(), "/", "1000_onlyupaftercontrol_permtest.csv", sep=''))
-
+write.csv(result, file=paste(getwd(), "/", "10000_onlyup_permtest.csv", sep=''))
+##########################remove all unnecessary thing for further analysis####
+rm(chip, define,filelist,filetable,interval,object,prerelease,Sequence,stage,tissue,address,c,chip1,chr,collect,i,interval1,stage1,tissue1,convertline,minus1)
 
 
 ##########load it back###############################################
-setwd("~/OneDrive/uclPHD/meta-data/experiment")
+setwd("~/OneDrive/uclPHD/meta-data/switch_experiment/atac_overlap")
+setwd("C:/Users/cmlf/OneDrive/uclPHD/meta-data/switch_experiment/atac_overlap") 
 
-result<-read.csv(paste(getwd(), "/", "1000_onlyupaftercontrol_permtest.csv", sep=''))
-
+result<-read.csv(paste(getwd(), "/", "10000_onlyup_aftercontrol.csv", sep='')) #1077 object
+#control<-read.csv(paste(getwd(), "/", "1000_onlyupcontrol_permtest.csv", sep=''))
 
 ###########plot something############################################
 plot(result$padj)
@@ -389,7 +273,11 @@ normalize<-intersect(foxosig$ID, controlsig$ID)
 
 foxoaftercontrol<-subset(result, !result$ID %in% normalize)
 
-##########separate the histone and the other ########################
+
+
+##############################################################
+##########separate the histone and the other 
+##############################################################
 histone<-filter(result, result$object1 %in% str_extract(result$object1, "H[0-9][\\s\\S]*"))
 
 positivecode<-c("H2BK5ac", "H2Bubi", "H2Bubi", "H3K18ac", "H3K23ac", "H3K27ac", "H3K27me1", "H3K36me2", "H3K36me3", "H3K4me1", "H3K4me2", "H3K4me3",
@@ -411,26 +299,287 @@ for (i in 1:nrow(histone)){
 
 histone1<-cbind(histone, transcriptionside)
 
+sighistone<-subset(histone1, histone1$padj<0.01)
+nosighistone<-subset(histone1, histone1$padj>0.01)
 
-nonhistone<-setdiff(result, histone)
+#################################################################
+##Seperate tf and and chromatin modifier
+#################################################################
+setwd("C:/Users/cmlf/OneDrive/uclPHD/meta-data/switch_experiment/atac_overlap/report")
+objectanno<-read.csv("allobjannotated2.csv") #main difference will be HDAC1/RPD3
+tf<-subset(objectanno,objectanno$category %in% "tf")
+cm<-subset(objectanno,objectanno$category %in% "cm")
+
+nonhistone<-subset(result,result$X %in% setdiff(result$X, histone$X))
+category<-vector()
+
+for (i in 1:nrow(nonhistone)){
+  if (nonhistone$object1[i] %in% tf$object){
+    category[i]<-"tf"
+  } else if (nonhistone$object1[i] %in% cm$object){
+    category[i]<-"cm"
+  } else {
+    category[i]<-"NA"
+  }
+}
+
+nonhistone1<-cbind(nonhistone,category)
+
+tfresult<-subset(nonhistone1,nonhistone1$category %in% "tf")
+cmresult<-subset(nonhistone1,nonhistone1$category %in% "cm")
+
+trx<-as.character(subset(cm$object,cm$Trx_polycomb %in% "TRX"))
+polycomb<-as.character(subset(cm$object,cm$Trx_polycomb %in% c("polycomb","Polycomb")))
+other<-as.character(subset(cm$object,cm$Trx_polycomb %in% "N"))
+group<-vector()
+
+for (i in 1:nrow(cmresult)){
+  if (cmresult$object1[i] %in% trx){
+    group[i]<-"trx"
+  } else if (cmresult$object1[i] %in% polycomb){
+    group[i]<-"polycomb"
+  } else {
+    group[i]<-"others"
+  }
+}
+
+cmresult1<-cbind(cmresult,group)
+sigcmresult<-subset(cmresult1,cmresult$padj<0.01)
 
 
+################################################################
+#TEST HISTONE SIGNIFICANT
+################################################################
+
+n<-nrow(histone1) #Number of groups
+us<-nrow(subset(sighistone, sighistone$transcriptionside == "up")) #Number of groups padj<0.01 and have activation marks #86
+ds<-nrow(subset(sighistone, sighistone$transcriptionside == "repress")) #Number of groups padj<0.01 and have repression marks #16
+ns<-nrow(subset(sighistone, sighistone$transcriptionside == "NA")) #Number of groups padj<0.01 and have mild marks #9
+uns<-nrow(subset(nosighistone, nosighistone$transcriptionside == "up")) #Number of groups padj>0.01 and have activation marks #268
+dns<-nrow(subset(nosighistone, nosighistone$transcriptionside == "repress")) #Number of groups padj>0.01 and have repression marks #106
+nns<-nrow(subset(nosighistone, nosighistone$transcriptionside == "NA")) #Number of groups padj>0.01 and have mild marks #27
+uas<-us+uns #354
+das<-ds+dns #122
+nas<-ns+nns #36
+aas<-uas+das+nas #512
+as<-us+ds+ns #111
+
+  
+#compare distribution of nonsig vs sig
+histonemat <- matrix(c(us,uns, ds, dns, ns, nns), ncol=3, nrow=2,
+              dimnames = list(significant = c("significant", "unsignificant"), Histone_marks = c("activation", "repression", "neutral")))
+fisher.test(histonemat) # p-value = 0.02418
+chisq.test(histonemat) #X-squared = 6.9293, df = 2, p-value = 0.03128
+
+#compare distribution of activation of sig vs nonsig
+histonemat1 <- matrix(c(us,uns, ds+ns, dns+nns), ncol=2, nrow=2,
+                      dimnames = list(significant = c("significant", "unsignificant"), Histone_marks = c("activation", "non-activation")))
+fisher.test(histonemat1) # p-value = 0.0364
+chisq.test(histonemat1) #X-squared = 4.1313, df = 1, p-value = 0.0421
+
+#compare distribution of repression of sig vs nonsig
+histonemat2<- matrix(c(ds,dns, us+ns, uns+nns), ncol=2, nrow=2,
+                     dimnames = list(significant = c("significant", "unsignificant"), Histone_marks = c("repressio", "non-repressio")))
+fisher.test(histonemat2) # p-value = 0.008114
+chisq.test(histonemat2) #X-squared = 6.2733, df = 1, p-value = 0.01226
 
 
+#compare distribution of sig vs all
+histonemat <- matrix(c(us,uas, ds, das, ns, nas), ncol=3, nrow=2,
+                     dimnames = list(significant = c("significant", "unsignificant"), Histone_marks = c("activation", "repression", "neutral")))
+fisher.test(histonemat) # p-value = 0.08261
+chisq.test(histonemat) # X-squared = 4.6937, df = 2, p-value = 0.09567
+
+#compare distribution of activation of sig vs all
+histonemat1 <- matrix(c(us,uas, ds+ns, das+nas), ncol=2, nrow=2,
+                     dimnames = list(significant = c("significant", "unsignificant"), Histone_marks = c("activation", "non-activation")))
+fisher.test(histonemat1) # p-value = 0.08548
+chisq.test(histonemat1) #X-squared = 2.6675, df = 1, p-value = 0.1024
+
+#compare distribution of repression of sig vs all
+histonemat2<- matrix(c(ds,das, us+ns, uas+nas), ncol=2, nrow=2,
+                      dimnames = list(significant = c("significant", "unsignificant"), Histone_marks = c("repressio", "non-repressio")))
+fisher.test(histonemat2) # p-value = 0.03197
+chisq.test(histonemat2) #X-squared = 4.1579, df = 1, p-value = 0.04144
+
+#compare distribution of others of sig vs all
+histonemat3<- matrix(c(ns,nas, us+ds, uas+das), ncol=2, nrow=2,
+                     dimnames = list(significant = c("significant", "unsignificant"), Histone_marks = c("others", "non-others")))
+fisher.test(histonemat3) # p-value = 0.6867
+chisq.test(histonemat3) #X-squared = 0.038058, df = 1, p-value = 0.8453
+
+
+###################################################################################################
+#PLOT THE HISTONE NUMBER
+###################################################################################################
+#Create matrix to plot the data#
+histonetable<-data.frame(marks<-c(rep("activation", 2),rep("repression",2), rep("others",2)),
+                         padj<-rep(c("<0.01","all"),3),
+                         value<-c(us,uas, ds, das, ns, nas))
+colnames(histonetable)<-c("functions","padj","value")
+
+#Create Another matrix for significance
+histoneper<-data.frame(as.character(padj<-c("<0.01")), value<-c(as.numeric(as+50))) #add the P on top of the bar, may need to change 10 depend on the figure
+colnames(histoneper)<-c("padj","value")
+
+#Create a third matrix to show the percentage of each percentage and the total number.
+histonenumber<-data.frame(padj<-c(rep("<0.01",4),rep("all",4)),value<-c(as+20,as-0.5*us, ds+0.5*ns, 0.5*ds,401+20,401-0.5*uns, dns+0.5*nns, 0.5*dns))#sigall #sigup  #sigother #sig down #all count #allup #all other #all down
+colnames(histonenumber)<-c("padj","value")
+
+#plot the dataset
+p=ggplot(histonetable, aes(padj,value))+ 
+  geom_bar(stat="identity", size=0.1, position="stack",width = 0.4, aes(fill=functions))+ #careful here, don't put fill on ggplot if want to combine with other geom_text
+  ylab("Number of data set")+xlab("Overlapping significance")
+
+
+p1=p+geom_text(data=histoneper,label="Fisher exact test: p=0.085", size=5, show.legend = F)
+
+p2=p1+geom_text(data=histonenumber,label=c("111 data set","77.5%","8.1%","14.4%","401 data set","66.8%","6.7%","26.5%"), size=4.5, show.legend = F)
+
+
+p2+theme(axis.line=element_line(size=2),axis.text=element_text(size=20),axis.title=element_text(size=20,face="plain",color="deepskyblue4"),
+        legend.text = element_text(size=20), legend.title = element_text(size=20))
+
+###################################################################################################
+#PLOT THE HISTONE PERCENTAGE
+###################################################################################################
+#Create matrix to plot the data
+
+histonetable2<-data.frame(marks<-c(rep(c("Activation","Other","Repression"),2)),
+                         padj<-c(rep("Significant",3),rep("Unsignificant",3)),
+                         value<-c(77.5,8.1,14.4,66.8,6.7,26.5))
+
+colnames(histonetable2)<-c("Functions","padj","value")
+
+#Create Another matrix for significance
+histoneper2<-data.frame(as.character(padj<-c("Significant")), value<-c(as.numeric(102))) #add the P on top of the bar, may need to change 10 depend on the figure
+colnames(histoneper2)<-c("padj","value")
+
+#Create a third matrix to show the percentage of each percentage and the total number.
+histonenumber2<-data.frame(padj<-c(rep("Significant",3),rep("Unsignificant",3)),value<-c(8.1+14.4+0.5*77.5,14.4+0.5*8.1, 14.4*0.5, 6.7+26.5+66.8*0.5, 26.5+0.5*6.7, 26.5*0.5))#sigall #sigup  #sigother #sig down #all count #allup #all other #all down
+colnames(histonenumber2)<-c("padj","value")
+
+#plot the dataset
+p=ggplot(histonetable2, aes(padj,value))+ 
+  geom_bar(stat="identity", size=0.1, position="stack",width = 0.4, aes(fill=Functions))+ #careful here, don't put fill on ggplot if want to combine with other geom_text
+  ylab("Percentage of data set")+xlab("Overlapping significance")+
+  scale_y_continuous(breaks = c(20,40,60,80,100))+
+  scale_fill_manual(values = c("#ff7761","#00dffc","#6d819c"))
+
+
+p1=p+geom_text(data=histoneper2,label="Pearson's Chi-squared test: p=0.0313", size=5, show.legend = F)
+
+p2=p1+geom_text(data=histonenumber2,label=c("77.5%","8.1%","14.4%","66.8%","6.7%","26.5%"), size=4.5, show.legend = F)
+
+
+p2+theme(axis.line=element_line(size=2),axis.text=element_text(size=20),axis.title=element_text(size=20,face="plain",color="deepskyblue4"),
+         legend.text = element_text(size=20), legend.title = element_text(size=20))
+
+###############################################################################
+#TRX AND POLYCOMB
+###############################################################################
+#1.Use self annotated result
+st<-nrow(subset(sigcmresult,sigcmresult$group == "trx")) #9
+sp<-nrow(subset(sigcmresult,sigcmresult$group == "polycomb"))#13
+so<-nrow(subset(sigcmresult,sigcmresult$group == "others"))#26
+at<-nrow(subset(cmresult1,cmresult1$group == "trx")) #79
+ap<-nrow(subset(cmresult1,cmresult1$group == "polycomb")) #67
+ao<-nrow(subset(cmresult1,cmresult1$group == "others")) #225
+
+#compare distribution of nonsig vs sig
+cmmatrix <- matrix(c(st,at, sp, ap, so, ao), ncol=3, nrow=2,
+                     dimnames = list(significant = c("significant", "unsignificant"), chromatin_group = c("trx", "polycomb", "others")))
+fisher.test(cmmatrix) # p-value = 0.5768
+chisq.test(cmmatrix) #X-squared = 0.95792, df = 2, p-value = 0.6194
+
+#2.Use the define flybase Gene groups
+st<-nrow(subset(sigcmresult,sigcmresult$group == "trx")) #17
+sp<-nrow(subset(sigcmresult,sigcmresult$group == "polycomb"))#5
+so<-nrow(subset(sigcmresult,sigcmresult$group == "others"))#26
+at<-nrow(subset(cmresult1,cmresult1$group == "trx")) #70
+ap<-nrow(subset(cmresult1,cmresult1$group == "polycomb")) #50
+ao<-nrow(subset(cmresult1,cmresult1$group == "others")) #251
+
+#compare distribution of nonsig vs sig
+cmmatrix <- matrix(c(st,at, sp, ap, so, ao), ncol=3, nrow=2,
+                   dimnames = list(significant = c("significant", "unsignificant"), chromatin_group = c("trx", "polycomb", "others")))
+fisher.test(cmmatrix) # p-value = 0.03914
+chisq.test(cmmatrix) #X-squared = 7.0785, df = 2, p-value = 0.02903
+
+#3.Use the define flybase Gene groups,and deleted HDAC1
+st<-nrow(subset(sigcmresult,sigcmresult$group == "trx"))-8 #9
+sp<-nrow(subset(sigcmresult,sigcmresult$group == "polycomb"))#5
+so<-nrow(subset(sigcmresult,sigcmresult$group == "others"))#26
+at<-nrow(subset(cmresult1,cmresult1$group == "trx"))-17 #53
+ap<-nrow(subset(cmresult1,cmresult1$group == "polycomb")) #50
+ao<-nrow(subset(cmresult1,cmresult1$group == "others")) #251
+
+cmmatrix <- matrix(c(st,at, sp, ap, so, ao), ncol=3, nrow=2,
+                   dimnames = list(significant = c("significant", "unsignificant"), chromatin_group = c("trx", "polycomb", "others")))
+fisher.test(cmmatrix) # p-value = 0.4447
+chisq.test(cmmatrix) #X-squared = 1.5405, df = 2, p-value = 0.4629
+
+cmmatrix <- matrix(c(st,at, sp+so, so+ao), ncol=2, nrow=2, #compare trx with other in sig vs all
+                   dimnames = list(significant = c("significant", "unsignificant"), chromatin_group = c("trx", "others")))
+fisher.test(cmmatrix) # p-value = 0.3678
+chisq.test(cmmatrix) #X-squared = 0.64913, df = 1, p-value = 0.4204
+
+########################################################################
+#PLOT TRX/POLYCOMB PERCENTAGE
+#########################################################################
+cmtable<-data.frame(marks<-c(rep(c("Trx","Others","Polycomb"),2)),
+                          padj<-c(rep("Significant",3),rep("All",3)),
+                          value<-c(35.4,54.2,10.4,18.9,67.4,13.7))
+
+colnames(cmtable)<-c("Functions","padj","value")
+
+#Create Another matrix for significance
+cmper<-data.frame(as.character(padj<-c("Significant")), value<-c(as.numeric(102))) #add the P on top of the bar, may need to change 10 depend on the figure
+colnames(cmper)<-c("padj","value")
+
+#Create a third matrix to show the percentage of each percentage and the total number.
+cmnumber<-data.frame(padj<-c(rep("Significant",3),rep("All",3)),value<-c(10.4+0.5*54.2+35.4,0.5*10.4+35.4, 35.4*0.5, 0.5*67.4+13.7+18.9, 18.9+0.5*13.7, 18.9*0.5))#sigall #sigup  #sigother #sig down #all count #allup #all other #all down
+colnames(cmnumber)<-c("padj","value")
+
+#plot the dataset
+p=ggplot(cmtable, aes(padj,value))+ 
+  geom_bar(stat="identity", size=0.1, position="stack",width = 0.4, aes(fill=Functions))+ #careful here, don't put fill on ggplot if want to combine with other geom_text
+  ylab("Percentage of data set")+xlab("Overlapping significance")+
+  scale_y_continuous(breaks = c(20,40,60,80,100))+
+  scale_fill_manual(values = c("#ff7761","#00dffc","#6d819c"))
+
+
+p1=p+geom_text(data=cmper,label="Pearson's Chi-squared test: p=0.02903", size=5, show.legend = F)
+
+p2=p1+geom_text(data=cmnumber,label=c("54.2%","10.4%","35.4%","67.4%","13.7%","18.9%"), size=4.5, show.legend = F)
+
+
+p2+theme(axis.line=element_line(size=2),axis.text=element_text(size=20),axis.title=element_text(size=20,face="plain",color="deepskyblue4"),
+         legend.text = element_text(size=20), legend.title = element_text(size=20))
 
 #################################################################################
-#################deep into the overlap pattern#################################
+#deep into the overlap pattern
 ###############################################################################
-#######get the list of object which is significant after control#############
-sigresult<-subset(result, result$padj<0.01)
+#get the list of object which is significant after control#############
+result1<-result
+
+sigresult<-subset(result1, result1$padj<0.01)
 
 whichgrange<-as.vector(as.numeric(sigresult$X))
 
-######get the list of interesting object#################
+#############################################################
+#get the list of interesting object
+#############################################################
 ########select the specific complex component to plot################
-complex<-c("nejire","ISWI","ACF1","NURF301","CtBP","MLE","MOF","MSL-1","HDAC1","dMi-2","Pho","dSFMBT","WDS","JHDM1","Psc","dRING","PIWI","Rhino","SNR1","brahma","Enhancer-of-zeste","Pc","Su(var)3-9","HP1a","JIL-1","LSD1","HDAC1","Su(var)3-7","H3K9me3") #ISWI,MSL,NURD,PHORC,
-component<-subset(result, result$object1 %in% complex)
 
+#complex<-c("nejire","ISWI","ACF1","NURF301","CtBP","MLE","MOF","MSL-1","HDAC1","dMi-2","Pho","dSFMBT","WDS","JHDM1","Psc","dRING","PIWI","Rhino","SNR1","brahma","Enhancer-of-zeste","Pc","Su(var)3-9","HP1a","JIL-1","LSD1","HDAC1","Su(var)3-7") #ISWI,MSL,NURD,PHORC,
+
+#lets find the trx group proteins!
+complex<-c("nejire","ISWI","ACF1","NURF301","CtBP","SNR1","brahma","HDAC1","dMi-2","WDS") #iswi, #INO80, #SWI/SNF #NURD #Compass/TRR/TRX(only WDS), #TAC1.#NURF #ASH1
+#Then find the polycomb group proteins
+complex<-c("JHDM1","Psc","dRING","Pho","dSFMBT","Enhancer-of-zeste","Pc")
+
+component<-subset(result1, result1$object1 %in% complex) 
 whichcomponent<-as.vector(as.numeric(component$X))
 
 #############run the findOverlaps to find the overlap in foxo ###############
@@ -457,12 +606,11 @@ for (i in 1:length(overlap)){
 colnames(overlapdata)<-c(1:length(foxogRange))
 overlapdata<-cbind(ID2,object2,overlapdata) 
 
-
+overlapdata1<-overlapdata[order(pmatch(overlapdata$object2,complex, duplicates.ok = TRUE)),, drop=FALSE]
 
 
 #########################################################################################
-##############Use chipseeker to explore the feature of foxo sig peak#####################
-########################################################################################
+##############Use chipseeker to explore the feature of foxo sig peak
 ###plot the foxo sig region#############################
 covplot(foxogRange)
 
@@ -486,11 +634,10 @@ tagHeatmap(promotermatrix, xlim=c(-3000,3000))
 plotAvgProf(promotermatrix, xlim=c(-3000,3000), xlab="Genomic region (5-3)", ylab="Read count frequency")
 
 #####do some annotaiton#######
-peakANNO<-annotatePeak(foxogRange,tssRegion=c(-3000,3000), TxDb=txdb)
+peakANNO<-annotatePeak(foxogRange1,tssRegion=c(-3000,3000), TxDb=txdb)
 foxopeakid<-peakANNO@anno$geneId
-
 peakannoresult<-as.data.frame(as.GRanges(peakANNO))
-write.csv(peakannoresult, file=paste(getwd(), "/", "foxosigpeak.csv", sep=''))
+#write.csv(peakannoresult, file=paste(getwd(), "/", "foxosigpeak.csv", sep=''))
 
 ######plot the annotation #####################
 plotAnnoPie(peakANNO)
@@ -500,33 +647,18 @@ upsetplot(peakANNO, vennpie=TRUE)
 
 
 #############################################################################
-######specify some condition on object and plot heatmap######################
+#specify some condition on object and plot heatmap
 ############################################################################
-######only histone##############
-histoneheatmap<-filter(overlapdata, overlapdata$object2 %in% str_extract(overlapdata$object2, "H[0-9][\\s\\S]*"))
 
-
-#####not histone#############################
-nonhistoneheatmap<-setdiff(overlapdata, histoneheatmap)
-
-#rownames(overlapdata)<-overlapdata[,1]
-
-
-
-################################################################
-######create the heatmap#######################################
-##############################################################
-###################create the simple heatmap##################
-forheatmap<-as.matrix(overlapdata[,-c(1,2)])
-rownames(forheatmap)<-object2
+forheatmap<-as.matrix(overlapdata1[,-c(1,2)])
+rownames(forheatmap)<-overlapdata1$object2
 colnames(forheatmap)<-foxopeakid
 
-#forheatmaphistone<-as.matrix(histoneheatmap[,-c(1,2)])
-#rownames(forheatmaphistone)<-as.vector(as.character(histoneheatmap$object2))
 
-
-##################ggplot for heatmap##################################
-###########reshape the data#######################################
+##############################################################
+#ggplot for heatmap
+##############################################################
+#reshape the data
 
 ggheatmap<-data.frame(matrix(NA, nrow=12705, ncol=3))
 
@@ -554,54 +686,16 @@ for (i in 1:nrow(forheatmap)){
 colnames(ggheatmap)<-c("object", "foxopeak", "overlap")
 cols<-c("1"="violetred2", "0"="gray70")
 
-##########heatmap by ggplot##################################
+#heatmap by ggplot
 ggplot(data = ggheatmap, aes(x = object, y = foxopeak)) +
 geom_tile(aes(fill = overlap), colour="steelblue")+
 scale_fill_manual(values=cols)
 
-###########heatmap by pheatmap####################
-pheatmap(forheatmap, color=c( "gray70","violetred2"), fontsize=9, fontsize_row=6, cellwidth = 7, cellheight = 5, cluster_cols=TRUE)
-
-###################maybe caculate the average effect for each object########
-level<-as.character(levels(nonhistone$object1))
-
-averagepval<-list()
-number<-list()
-
-for (i in 1:length(level)){
-  obj<-level[i]
-  objcollection<-subset(nonhistone, nonhistone$object1 %in% obj)
-  averagepval[i]<-sum(as.numeric(as.character(objcollection$psig)))/nrow(objcollection)
-  number[i]<-nrow(objcollection)
-}
-
-averagepval<-as.vector(unlist(averagepval))
-number<-as.vector(unlist(number))
-averagepadj<-p.adjust(averagepval, method='fdr')
-
-objectalone<-as.data.frame(cbind(level, averagepval, averagepadj, number))
-
-#########try other method(genometric correlation)######################
-
-genomecorelation<-list()
-i<-1 
-
-for (i in 1:length(collect)){
-try(genomecorelation[[i]]<- GenometriCorrelation(filetableGrange[[i]], foxogRange,  permut.number = 500,keep.distributions = TRUE, showProgressBar = FALSE))
-cat(i, "\n")
-
-}
 
 
-#############basic overlap summary######################
-overlapRegions(foxogRange, filetableGrange[[i]], min.pctA= , get.pctA=TRUE, get.bases=TRUE) #Minimum percentage of A being overlapped///how much should be fine?
 
-#############basic graph summary########################
-i<-
-overlapGraphicalSummary(foxogRange, filetableGrange[[i]], regions.labels=c("foxo", ID[i]), regions.colors=c("black","forestgreen","red"))
+##################################################
+#heatmap by pheatmap
 
-
-#############combine signal and target gRange to a matrix########
-mat1 = normalizeToMatrix(foxogRange, filetableGrange[1], value_column = "coverage", 
-                         extend = 5000, mean_mode = "w0", w = 50)
+pheatmap(forheatmap, color=c( "gray70","violetred2"), fontsize=9, fontsize_row=6, cellwidth = 7, cellheight = 5, cluster_cols=TRUE, cluster_rows=FALSE)
 
